@@ -1,7 +1,7 @@
+using AutoMapper;
 using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Application.DTOs;
 using RealEstateApi.Domain.Models;
-using RealEstateApi.Mappings;
 
 namespace RealEstateApi.Application.Services;
 
@@ -9,11 +9,13 @@ public class ListingContactService : IListingContactService
 {
     private readonly IListingRepository _listingRepo;
     private readonly IContactRepository _contactRepo;
+    private readonly IMapper _mapper;
 
-    public ListingContactService(IListingRepository listingRepo, IContactRepository contactRepo)
+    public ListingContactService(IListingRepository listingRepo, IContactRepository contactRepo, IMapper mapper)
     {
         _listingRepo = listingRepo;
         _contactRepo = contactRepo;
+        _mapper = mapper;
     }
 
     public async Task<IEnumerable<ContactDto>> GetContactsAsync(int listingId)
@@ -22,7 +24,7 @@ public class ListingContactService : IListingContactService
         if (listing == null) throw new KeyNotFoundException($"Listing {listingId} not found");
 
         var contacts = await _contactRepo.GetByListingIdAsync(listingId);
-        return contacts.Select(c => c.ToDto());
+        return _mapper.Map<IEnumerable<ContactDto>>(contacts);
     }
 
     public async Task<ContactDto> AddContactAsync(int listingId, AddContactRequest request)
@@ -30,20 +32,11 @@ public class ListingContactService : IListingContactService
         var listing = await _listingRepo.GetByIdAsync(listingId);
         if (listing == null) throw new KeyNotFoundException($"Listing {listingId} not found");
 
-        var contact = new Contact
-        {
-            ListingId = listingId,
-            FullName = request.FullName,
-            IdNumber = request.IdNumber,
-            CompanyName = request.CompanyName,
-            CompanyRegistrationNumber = request.CompanyRegistrationNumber,
-            MobilePhone = request.MobilePhone,
-            EmailAddress = request.EmailAddress,
-            Role = request.Role
-        };
+        var contact = _mapper.Map<Contact>(request);
+        contact.ListingId = listingId;
 
         var result = await _contactRepo.CreateAsync(contact);
-        return result.ToDto();
+        return _mapper.Map<ContactDto>(result);
     }
 
     public async Task<ContactDto?> UpdateContactAsync(int listingId, int contactId, UpdateContactRequest request)
@@ -51,20 +44,12 @@ public class ListingContactService : IListingContactService
         var listing = await _listingRepo.GetByIdAsync(listingId);
         if (listing == null) throw new KeyNotFoundException($"Listing {listingId} not found");
 
-        var contact = new Contact
-        {
-            Id = contactId,
-            FullName = request.FullName,
-            IdNumber = request.IdNumber,
-            CompanyName = request.CompanyName,
-            CompanyRegistrationNumber = request.CompanyRegistrationNumber,
-            MobilePhone = request.MobilePhone,
-            EmailAddress = request.EmailAddress,
-            Role = request.Role
-        };
+        var contact = _mapper.Map<Contact>(request);
+        contact.Id = contactId;
+        contact.ListingId = listingId;
 
         var result = await _contactRepo.UpdateAsync(contact);
-        return result?.ToDto();
+        return result is null ? null : _mapper.Map<ContactDto>(result);
     }
 
     public async Task DeleteContactAsync(int listingId, int contactId)

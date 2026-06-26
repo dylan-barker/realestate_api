@@ -1,7 +1,7 @@
+using AutoMapper;
 using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Application.DTOs;
 using RealEstateApi.Domain.Models;
-using RealEstateApi.Mappings;
 
 namespace RealEstateApi.Application.Services;
 
@@ -15,6 +15,7 @@ public class ListingService : IListingService
     private readonly IListingRoomRepository _roomRepo;
     private readonly IListingParkingRepository _parkingRepo;
     private readonly IContactRepository _contactRepo;
+    private readonly IMapper _mapper;
 
     public ListingService(
         IListingRepository listingRepo,
@@ -24,7 +25,8 @@ public class ListingService : IListingService
         IPropertyRunningCostsRepository runningCostsRepo,
         IListingRoomRepository roomRepo,
         IListingParkingRepository parkingRepo,
-        IContactRepository contactRepo)
+        IContactRepository contactRepo,
+        IMapper mapper)
     {
         _listingRepo = listingRepo;
         _addressRepo = addressRepo;
@@ -34,6 +36,7 @@ public class ListingService : IListingService
         _roomRepo = roomRepo;
         _parkingRepo = parkingRepo;
         _contactRepo = contactRepo;
+        _mapper = mapper;
     }
 
     public async Task<ListingResponse> CreateAsync(CreateListingRequest request)
@@ -52,7 +55,7 @@ public class ListingService : IListingService
     public async Task<IEnumerable<ListingSummaryDto>> GetAllAsync(string? status, DateTime? dateFrom, DateTime? dateTo)
     {
         var listings = await _listingRepo.GetAllAsync(status, dateFrom, dateTo);
-        return listings.Select(l => l.ToSummaryDto());
+        return _mapper.Map<IEnumerable<ListingSummaryDto>>(listings);
     }
 
     public async Task<ListingResponse?> UpdateAsync(int id, UpdateListingRequest request)
@@ -77,88 +80,56 @@ public class ListingService : IListingService
     public async Task<ListingAddressDto?> GetAddressAsync(int listingId)
     {
         var address = await _addressRepo.GetByListingIdAsync(listingId);
-        return address?.ToDto();
+        return address is null ? null : _mapper.Map<ListingAddressDto>(address);
     }
 
     public async Task<ListingAddressDto> UpsertAddressAsync(int listingId, UpsertAddressRequest request)
     {
-        var address = new ListingAddress
-        {
-            ListingId = listingId,
-            ErfNumber = request.ErfNumber,
-            EstateName = request.EstateName,
-            StreetNumber = request.StreetNumber,
-            UnitNumber = request.UnitNumber,
-            Street = request.Street,
-            Suburb = request.Suburb,
-            City = request.City,
-            Province = request.Province,
-            Country = request.Country,
-            PostalCode = request.PostalCode,
-            Latitude = request.Latitude,
-            Longitude = request.Longitude
-        };
+        var address = _mapper.Map<ListingAddress>(request);
+        address.ListingId = listingId;
         var result = await _addressRepo.UpsertAsync(address);
-        return result.ToDto();
+        return _mapper.Map<ListingAddressDto>(result);
     }
 
     public async Task<BuildingInfoDto?> GetBuildingInfoAsync(int listingId)
     {
         var info = await _buildingInfoRepo.GetByListingIdAsync(listingId);
-        return info?.ToDto();
+        return info is null ? null : _mapper.Map<BuildingInfoDto>(info);
     }
 
     public async Task<BuildingInfoDto> UpsertBuildingInfoAsync(int listingId, UpsertBuildingInfoRequest request)
     {
-        var info = new ListingBuildingInfo
-        {
-            ListingId = listingId,
-            ErfSize = request.ErfSize,
-            FloorArea = request.FloorArea,
-            ConstructionYear = request.ConstructionYear,
-            FacingId = request.FacingId,
-            ZoningId = request.ZoningId
-        };
+        var info = _mapper.Map<ListingBuildingInfo>(request);
+        info.ListingId = listingId;
         var result = await _buildingInfoRepo.UpsertAsync(info);
-        return result.ToDto();
+        return _mapper.Map<BuildingInfoDto>(result);
     }
 
     public async Task<ValuationDto?> GetValuationAsync(int listingId)
     {
         var valuation = await _valuationRepo.GetByListingIdAsync(listingId);
-        return valuation?.ToDto();
+        return valuation is null ? null : _mapper.Map<ValuationDto>(valuation);
     }
 
     public async Task<ValuationDto> UpsertValuationAsync(int listingId, UpsertValuationRequest request)
     {
-        var valuation = new ListingValuation
-        {
-            OwnersNetPrice = request.OwnersNetPrice,
-            AgentValuation = request.AgentValuation,
-            CommissionPercent = request.CommissionPercent
-        };
+        var valuation = _mapper.Map<ListingValuation>(request);
         var result = await _valuationRepo.UpsertAsync(listingId, valuation);
-        return result.ToDto();
+        return _mapper.Map<ValuationDto>(result);
     }
 
     public async Task<RunningCostsDto?> GetRunningCostsAsync(int listingId)
     {
         var costs = await _runningCostsRepo.GetByListingIdAsync(listingId);
-        return costs?.ToDto();
+        return costs is null ? null : _mapper.Map<RunningCostsDto>(costs);
     }
 
     public async Task<RunningCostsDto> UpsertRunningCostsAsync(int listingId, UpsertRunningCostsRequest request)
     {
-        var costs = new PropertyRunningCosts
-        {
-            ListingId = listingId,
-            MonthlyLevy = request.MonthlyLevy,
-            MonthlyRates = request.MonthlyRates,
-            Electricity = request.Electricity,
-            Water = request.Water
-        };
+        var costs = _mapper.Map<PropertyRunningCosts>(request);
+        costs.ListingId = listingId;
         var result = await _runningCostsRepo.UpsertAsync(costs);
-        return result.ToDto();
+        return _mapper.Map<RunningCostsDto>(result);
     }
 
     private async Task<ListingResponse> BuildFullResponseAsync(Listing listing)
@@ -175,14 +146,17 @@ public class ListingService : IListingService
 
         await Task.WhenAll(addressTask, buildingInfoTask, valuationTask, runningCostsTask, roomsTask, parkingTask, contactsTask);
 
-        return listing.ToFullDto(
-            addressTask.Result?.ToDto(),
-            buildingInfoTask.Result?.ToDto(),
-            valuationTask.Result?.ToDto(),
-            runningCostsTask.Result?.ToDto(),
+        return new ListingResponse(
+            listing.Id, listing.ReferenceNumber, listing.P24Ref, listing.PropertyTypeId,
+            listing.ListingValuationId, listing.ListDate, listing.Status,
+            listing.CreatedAt, listing.UpdatedAt,
+            addressTask.Result is null ? null : _mapper.Map<ListingAddressDto>(addressTask.Result),
+            buildingInfoTask.Result is null ? null : _mapper.Map<BuildingInfoDto>(buildingInfoTask.Result),
+            valuationTask.Result is null ? null : _mapper.Map<ValuationDto>(valuationTask.Result),
+            runningCostsTask.Result is null ? null : _mapper.Map<RunningCostsDto>(runningCostsTask.Result),
             roomsTask.Result,
-            parkingTask.Result.Select(p => p.ToParkingDto(p.ParkingTypeDescription ?? "")).ToList(),
-            contactsTask.Result.Select(c => c.ToDto()).ToList()
+            parkingTask.Result.Select(p => _mapper.Map<ParkingDto>(p)).ToList(),
+            contactsTask.Result.Select(c => _mapper.Map<ContactDto>(c)).ToList()
         );
     }
 
@@ -199,10 +173,12 @@ public class ListingService : IListingService
 
             await Task.WhenAll(conditionTask, featuresTask, customFeaturesTask);
 
-            roomDtos.Add(room.ToDto(
-                conditionTask.Result?.ToDto(),
-                featuresTask.Result.Select(f => f.ToDto()).ToList(),
-                customFeaturesTask.Result.Select(cf => cf.ToDto()).ToList()
+            roomDtos.Add(new RoomDto(
+                room.Id, room.ListingId, room.Name, room.RoomTypeId,
+                room.RoomTypeOther, room.PhotoUrl, room.CreatedAt, room.UpdatedAt,
+                conditionTask.Result is null ? null : _mapper.Map<RoomConditionDto>(conditionTask.Result),
+                featuresTask.Result.Select(f => _mapper.Map<FeatureDto>(f)).ToList(),
+                customFeaturesTask.Result.Select(cf => _mapper.Map<CustomFeatureDto>(cf)).ToList()
             ));
         }
 

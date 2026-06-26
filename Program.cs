@@ -1,8 +1,10 @@
+using AutoMapper;
 using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Application.Services;
 using RealEstateApi.Infrastructure.Data;
 using RealEstateApi.Infrastructure.Repositories;
 using RealEstateApi.Infrastructure.Services;
+using RealEstateApi.Mappings;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +29,9 @@ builder.Services.AddScoped<IContactRepository, ContactRepository>();
 // Infrastructure Services
 builder.Services.Configure<R2Options>(builder.Configuration.GetSection(R2Options.SectionName));
 builder.Services.AddSingleton<IImageService, R2ImageService>();
+
+// AutoMapper
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfile>());
 
 // Application Services
 builder.Services.AddScoped<ILookupService, LookupService>();
