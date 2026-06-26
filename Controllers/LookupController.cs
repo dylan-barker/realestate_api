@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RealEstateApi.Application.Interfaces;
 
 namespace RealEstateApi.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Admin,Agent")]
 [Route("api")]
 public class LookupController : ControllerBase
 {

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RealEstateApi.Application.DTOs;
 using RealEstateApi.Application.Interfaces;
@@ -5,6 +6,7 @@ using RealEstateApi.Application.Interfaces;
 namespace RealEstateApi.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Admin,Agent")]
 [Route("api/listings/{listingId}/rooms")]
 public class ListingRoomsController : ControllerBase
 {
