@@ -2,6 +2,7 @@ using Dapper;
 using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Domain.Models;
 using RealEstateApi.Infrastructure.Data;
+using System.Data;
 
 namespace RealEstateApi.Infrastructure.Repositories;
 
@@ -20,7 +21,7 @@ public class ListingRoomRepository : IListingRoomRepository
         return await connection.QueryAsync<ListingRoom>(
             "sp_ListingRooms_GetByListingId",
             new { ListingId = listingId },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<ListingRoom?> GetByIdAsync(int id)
@@ -52,7 +53,7 @@ public class ListingRoomRepository : IListingRoomRepository
                 RoomTypeOther = room.RoomTypeOther,
                 PhotoUrl = room.PhotoUrl
             },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<ListingRoom?> UpdateAsync(ListingRoom room)
@@ -68,7 +69,7 @@ public class ListingRoomRepository : IListingRoomRepository
                 RoomTypeOther = room.RoomTypeOther,
                 PhotoUrl = room.PhotoUrl
             },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task DeleteAsync(int id)
@@ -77,7 +78,7 @@ public class ListingRoomRepository : IListingRoomRepository
         await connection.ExecuteAsync(
             "sp_ListingRooms_Delete",
             new { Id = id },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<Condition?> GetConditionByRoomIdAsync(int listingRoomId)
@@ -86,7 +87,7 @@ public class ListingRoomRepository : IListingRoomRepository
         return await connection.QueryFirstOrDefaultAsync<Condition>(
             "sp_Condition_GetByListingRoomId",
             new { ListingRoomId = listingRoomId },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<Condition> UpsertConditionAsync(Condition condition)
@@ -101,7 +102,7 @@ public class ListingRoomRepository : IListingRoomRepository
                 Notes = condition.Notes,
                 ConditionCategoryId = condition.ConditionCategoryId
             },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<IEnumerable<Feature>> GetLinkedFeaturesAsync(int listingRoomId)
@@ -110,7 +111,7 @@ public class ListingRoomRepository : IListingRoomRepository
         return await connection.QueryAsync<Feature>(
             "sp_ListingRoomFeatures_GetByListingRoomId",
             new { ListingRoomId = listingRoomId },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<IEnumerable<Feature>> LinkFeatureAsync(int listingRoomId, int featureId)
@@ -119,7 +120,7 @@ public class ListingRoomRepository : IListingRoomRepository
         return await connection.QueryAsync<Feature>(
             "sp_ListingRoomFeatures_Link",
             new { ListingRoomId = listingRoomId, FeatureId = featureId },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<IEnumerable<Feature>> UnlinkFeatureAsync(int listingRoomId, int featureId)
@@ -128,7 +129,7 @@ public class ListingRoomRepository : IListingRoomRepository
         return await connection.QueryAsync<Feature>(
             "sp_ListingRoomFeatures_Unlink",
             new { ListingRoomId = listingRoomId, FeatureId = featureId },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<IEnumerable<ListingRoomCustomFeature>> GetCustomFeaturesAsync(int listingRoomId)
@@ -137,7 +138,7 @@ public class ListingRoomRepository : IListingRoomRepository
         return await connection.QueryAsync<ListingRoomCustomFeature>(
             "sp_ListingRoomCustomFeatures_GetByListingRoomId",
             new { ListingRoomId = listingRoomId },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<ListingRoomCustomFeature> AddCustomFeatureAsync(ListingRoomCustomFeature feature)
@@ -150,7 +151,7 @@ public class ListingRoomRepository : IListingRoomRepository
                 ListingRoomId = feature.ListingRoomId,
                 Description = feature.Description
             },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task DeleteCustomFeatureAsync(int id)
@@ -159,6 +160,6 @@ public class ListingRoomRepository : IListingRoomRepository
         await connection.ExecuteAsync(
             "sp_ListingRoomCustomFeatures_Remove",
             new { Id = id },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 }

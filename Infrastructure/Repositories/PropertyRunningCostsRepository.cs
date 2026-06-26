@@ -2,6 +2,7 @@ using Dapper;
 using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Domain.Models;
 using RealEstateApi.Infrastructure.Data;
+using System.Data;
 
 namespace RealEstateApi.Infrastructure.Repositories;
 
@@ -20,7 +21,7 @@ public class PropertyRunningCostsRepository : IPropertyRunningCostsRepository
         return await connection.QueryFirstOrDefaultAsync<PropertyRunningCosts>(
             "sp_PropertyRunningCosts_GetByListingId",
             new { ListingId = listingId },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<PropertyRunningCosts> UpsertAsync(PropertyRunningCosts costs)
@@ -36,6 +37,6 @@ public class PropertyRunningCostsRepository : IPropertyRunningCostsRepository
                 Electricity = costs.Electricity,
                 Water = costs.Water
             },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 }

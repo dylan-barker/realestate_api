@@ -2,6 +2,7 @@ using Dapper;
 using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Domain.Models;
 using RealEstateApi.Infrastructure.Data;
+using System.Data;
 
 namespace RealEstateApi.Infrastructure.Repositories;
 
@@ -20,7 +21,7 @@ public class ListingParkingRepository : IListingParkingRepository
         return await connection.QueryAsync<ListingParking>(
             "sp_ListingParking_GetByListingId",
             new { ListingId = listingId },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<ListingParking> CreateAsync(ListingParking parking)
@@ -34,7 +35,7 @@ public class ListingParkingRepository : IListingParkingRepository
                 ParkingTypeId = parking.ParkingTypeId,
                 Quantity = parking.Quantity
             },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<ListingParking?> UpdateAsync(int id, int quantity)
@@ -43,7 +44,7 @@ public class ListingParkingRepository : IListingParkingRepository
         return await connection.QueryFirstOrDefaultAsync<ListingParking>(
             "sp_ListingParking_Update",
             new { Id = id, Quantity = quantity },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task DeleteAsync(int id)
@@ -52,6 +53,6 @@ public class ListingParkingRepository : IListingParkingRepository
         await connection.ExecuteAsync(
             "sp_ListingParking_Delete",
             new { Id = id },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 }

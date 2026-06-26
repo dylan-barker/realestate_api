@@ -2,6 +2,7 @@ using Dapper;
 using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Domain.Models;
 using RealEstateApi.Infrastructure.Data;
+using System.Data;
 
 namespace RealEstateApi.Infrastructure.Repositories;
 
@@ -20,7 +21,7 @@ public class ListingRepository : IListingRepository
         return await connection.QueryFirstOrDefaultAsync<Listing>(
             "sp_Listings_GetById",
             new { Id = id },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<IEnumerable<Listing>> GetAllAsync(string? status, DateTime? dateFrom, DateTime? dateTo)
@@ -29,7 +30,7 @@ public class ListingRepository : IListingRepository
         return await connection.QueryAsync<Listing>(
             "sp_Listings_GetAll",
             new { Status = status, DateFrom = dateFrom, DateTo = dateTo },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<Listing> CreateAsync(int propertyTypeId, string? p24Ref)
@@ -38,7 +39,7 @@ public class ListingRepository : IListingRepository
         return await connection.QueryFirstOrDefaultAsync<Listing>(
             "sp_Listings_Create",
             new { PropertyTypeId = propertyTypeId, P24Ref = p24Ref },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<Listing?> UpdateAsync(int id, string? status, string? p24Ref, int? propertyTypeId)
@@ -47,7 +48,7 @@ public class ListingRepository : IListingRepository
         return await connection.QueryFirstOrDefaultAsync<Listing>(
             "sp_Listings_Update",
             new { Id = id, Status = status, P24Ref = p24Ref, PropertyTypeId = propertyTypeId },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task DeleteAsync(int id)
@@ -56,7 +57,7 @@ public class ListingRepository : IListingRepository
         await connection.ExecuteAsync(
             "sp_Listings_Delete",
             new { Id = id },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<Listing?> SubmitAsync(int id)
@@ -65,6 +66,6 @@ public class ListingRepository : IListingRepository
         return await connection.QueryFirstOrDefaultAsync<Listing>(
             "sp_Listings_Submit",
             new { Id = id },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 }

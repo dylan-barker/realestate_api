@@ -2,6 +2,7 @@ using Dapper;
 using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Domain.Models;
 using RealEstateApi.Infrastructure.Data;
+using System.Data;
 
 namespace RealEstateApi.Infrastructure.Repositories;
 
@@ -20,7 +21,7 @@ public class ListingBuildingInfoRepository : IListingBuildingInfoRepository
         return await connection.QueryFirstOrDefaultAsync<ListingBuildingInfo>(
             "sp_ListingBuildingInfo_GetByListingId",
             new { ListingId = listingId },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<ListingBuildingInfo> UpsertAsync(ListingBuildingInfo info)
@@ -37,6 +38,6 @@ public class ListingBuildingInfoRepository : IListingBuildingInfoRepository
                 FacingId = info.FacingId,
                 ZoningId = info.ZoningId
             },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 }
