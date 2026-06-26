@@ -2,6 +2,7 @@ using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Application.Services;
 using RealEstateApi.Infrastructure.Data;
 using RealEstateApi.Infrastructure.Repositories;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +36,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
