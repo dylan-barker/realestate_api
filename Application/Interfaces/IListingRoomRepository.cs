@@ -5,9 +5,11 @@ namespace RealEstateApi.Application.Interfaces;
 public interface IListingRoomRepository
 {
     Task<IEnumerable<ListingRoom>> GetByListingIdAsync(int listingId);
+    Task<ListingRoom?> GetByIdAsync(int id);
     Task<ListingRoom> CreateAsync(ListingRoom room);
     Task<ListingRoom?> UpdateAsync(ListingRoom room);
     Task DeleteAsync(int id);
+    Task UpdatePhotoUrlAsync(int roomId, string? photoUrl);
     Task<Condition?> GetConditionByRoomIdAsync(int listingRoomId);
     Task<Condition> UpsertConditionAsync(Condition condition);
     Task<IEnumerable<Feature>> GetLinkedFeaturesAsync(int listingRoomId);

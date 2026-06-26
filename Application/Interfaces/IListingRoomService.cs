@@ -8,6 +8,8 @@ public interface IListingRoomService
     Task<RoomDto> CreateRoomAsync(int listingId, CreateRoomRequest request);
     Task<RoomDto?> UpdateRoomAsync(int listingId, int roomId, UpdateRoomRequest request);
     Task DeleteRoomAsync(int listingId, int roomId);
+    Task<PhotoUploadResponse> UploadPhotoAsync(int listingId, int roomId, Stream fileStream, string fileName, string contentType);
+    Task DeletePhotoAsync(int listingId, int roomId);
     Task<RoomConditionDto> UpsertConditionAsync(int listingId, int roomId, UpsertRoomConditionRequest request);
     Task<IEnumerable<FeatureDto>> LinkFeatureAsync(int listingId, int roomId, int featureId);
     Task<IEnumerable<FeatureDto>> UnlinkFeatureAsync(int listingId, int roomId, int featureId);

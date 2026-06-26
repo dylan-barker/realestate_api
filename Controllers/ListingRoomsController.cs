@@ -29,6 +29,31 @@ public class ListingRoomsController : ControllerBase
         return CreatedAtAction(nameof(GetAll), new { listingId }, result);
     }
 
+    [HttpPost("{roomId}/photo")]
+    public async Task<IActionResult> UploadPhoto(int listingId, int roomId, IFormFile file)
+    {
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!allowedExtensions.Contains(ext))
+            return BadRequest("Only .jpg, .jpeg, .png, .webp files are allowed.");
+
+        if (file.Length > 5 * 1024 * 1024)
+            return BadRequest("File size must not exceed 5 MB.");
+
+        var uniqueName = $"{Guid.NewGuid()}{ext}";
+
+        await using var stream = file.OpenReadStream();
+        var result = await _roomService.UploadPhotoAsync(listingId, roomId, stream, uniqueName, file.ContentType);
+        return Ok(result);
+    }
+
+    [HttpDelete("{roomId}/photo")]
+    public async Task<IActionResult> DeletePhoto(int listingId, int roomId)
+    {
+        await _roomService.DeletePhotoAsync(listingId, roomId);
+        return NoContent();
+    }
+
     [HttpPut("{roomId}")]
     public async Task<IActionResult> Update(int listingId, int roomId, [FromBody] UpdateRoomRequest request)
     {

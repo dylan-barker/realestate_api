@@ -1,6 +1,8 @@
+using Microsoft.Extensions.Options;
 using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Application.DTOs;
 using RealEstateApi.Domain.Models;
+using RealEstateApi.Infrastructure.Services;
 using RealEstateApi.Mappings;
 
 namespace RealEstateApi.Application.Services;
@@ -9,11 +11,19 @@ public class ListingRoomService : IListingRoomService
 {
     private readonly IListingRepository _listingRepo;
     private readonly IListingRoomRepository _roomRepo;
+    private readonly IImageService _imageService;
+    private readonly IOptions<R2Options> _r2Options;
 
-    public ListingRoomService(IListingRepository listingRepo, IListingRoomRepository roomRepo)
+    public ListingRoomService(
+        IListingRepository listingRepo,
+        IListingRoomRepository roomRepo,
+        IImageService imageService,
+        IOptions<R2Options> r2Options)
     {
         _listingRepo = listingRepo;
         _roomRepo = roomRepo;
+        _imageService = imageService;
+        _r2Options = r2Options;
     }
 
     public async Task<IEnumerable<RoomDto>> GetRoomsAsync(int listingId)
@@ -93,7 +103,57 @@ public class ListingRoomService : IListingRoomService
         var listing = await _listingRepo.GetByIdAsync(listingId);
         if (listing == null) throw new KeyNotFoundException($"Listing {listingId} not found");
 
+        var room = await _roomRepo.GetByIdAsync(roomId);
+        if (room?.PhotoUrl is not null)
+        {
+            var key = ExtractKeyFromUrl(room.PhotoUrl);
+            await _imageService.DeleteAsync(key);
+        }
+
         await _roomRepo.DeleteAsync(roomId);
+    }
+
+    public async Task<PhotoUploadResponse> UploadPhotoAsync(int listingId, int roomId, Stream fileStream, string fileName, string contentType)
+    {
+        var listing = await _listingRepo.GetByIdAsync(listingId);
+        if (listing == null) throw new KeyNotFoundException($"Listing {listingId} not found");
+
+        var room = await _roomRepo.GetByIdAsync(roomId);
+        if (room == null) throw new KeyNotFoundException($"Room {roomId} not found under listing {listingId}");
+
+        // Delete existing photo if any
+        if (room.PhotoUrl is not null)
+        {
+            var existingKey = ExtractKeyFromUrl(room.PhotoUrl);
+            await _imageService.DeleteAsync(existingKey);
+        }
+
+        var key = $"rooms/{listingId}/{roomId}/{fileName}";
+        var url = await _imageService.UploadAsync(fileStream, key, contentType);
+        await _roomRepo.UpdatePhotoUrlAsync(roomId, url);
+
+        return new PhotoUploadResponse(url);
+    }
+
+    public async Task DeletePhotoAsync(int listingId, int roomId)
+    {
+        var listing = await _listingRepo.GetByIdAsync(listingId);
+        if (listing == null) throw new KeyNotFoundException($"Listing {listingId} not found");
+
+        var room = await _roomRepo.GetByIdAsync(roomId);
+        if (room == null) throw new KeyNotFoundException($"Room {roomId} not found under listing {listingId}");
+
+        if (room.PhotoUrl is null) return;
+
+        var key = ExtractKeyFromUrl(room.PhotoUrl);
+        await _imageService.DeleteAsync(key);
+        await _roomRepo.UpdatePhotoUrlAsync(roomId, null);
+    }
+
+    private string ExtractKeyFromUrl(string photoUrl)
+    {
+        var prefix = _r2Options.Value.PublicUrl.TrimEnd('/') + "/";
+        return photoUrl.StartsWith(prefix) ? photoUrl[prefix.Length..] : photoUrl;
     }
 
     public async Task<RoomConditionDto> UpsertConditionAsync(int listingId, int roomId, UpsertRoomConditionRequest request)

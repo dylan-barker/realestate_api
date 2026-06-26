@@ -23,6 +23,22 @@ public class ListingRoomRepository : IListingRoomRepository
             commandType: System.Data.CommandType.StoredProcedure);
     }
 
+    public async Task<ListingRoom?> GetByIdAsync(int id)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        return await connection.QueryFirstOrDefaultAsync<ListingRoom>(
+            "SELECT Id, ListingId, Name, RoomTypeId, RoomTypeOther, PhotoUrl, CreatedAt, UpdatedAt FROM ListingRoom WHERE Id = @Id",
+            new { Id = id });
+    }
+
+    public async Task UpdatePhotoUrlAsync(int roomId, string? photoUrl)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        await connection.ExecuteAsync(
+            "UPDATE ListingRoom SET PhotoUrl = @PhotoUrl, UpdatedAt = GETUTCDATE() WHERE Id = @Id",
+            new { Id = roomId, PhotoUrl = photoUrl });
+    }
+
     public async Task<ListingRoom> CreateAsync(ListingRoom room)
     {
         using var connection = _connectionFactory.CreateConnection();

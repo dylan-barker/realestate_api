@@ -2,6 +2,7 @@ using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Application.Services;
 using RealEstateApi.Infrastructure.Data;
 using RealEstateApi.Infrastructure.Repositories;
+using RealEstateApi.Infrastructure.Services;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,9 +11,8 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 // Infrastructure
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddSingleton(new DbConnectionFactory(connectionString));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddSingleton(new DbConnectionFactory(connectionString!));
 
 builder.Services.AddScoped<ILookupRepository, LookupRepository>();
 builder.Services.AddScoped<IListingRepository, ListingRepository>();
@@ -23,6 +23,10 @@ builder.Services.AddScoped<IPropertyRunningCostsRepository, PropertyRunningCosts
 builder.Services.AddScoped<IListingRoomRepository, ListingRoomRepository>();
 builder.Services.AddScoped<IListingParkingRepository, ListingParkingRepository>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
+
+// Infrastructure Services
+builder.Services.Configure<R2Options>(builder.Configuration.GetSection(R2Options.SectionName));
+builder.Services.AddSingleton<IImageService, R2ImageService>();
 
 // Application Services
 builder.Services.AddScoped<ILookupService, LookupService>();

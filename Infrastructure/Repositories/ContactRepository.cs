@@ -2,6 +2,7 @@ using Dapper;
 using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Domain.Models;
 using RealEstateApi.Infrastructure.Data;
+using System.Data;
 
 namespace RealEstateApi.Infrastructure.Repositories;
 
@@ -20,7 +21,7 @@ public class ContactRepository : IContactRepository
         return await connection.QueryAsync<Contact>(
             "sp_Contacts_GetByListingId",
             new { ListingId = listingId },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<Contact> CreateAsync(Contact contact)
@@ -39,7 +40,7 @@ public class ContactRepository : IContactRepository
                 EmailAddress = contact.EmailAddress,
                 Role = contact.Role
             },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<Contact?> UpdateAsync(Contact contact)
@@ -58,7 +59,7 @@ public class ContactRepository : IContactRepository
                 EmailAddress = contact.EmailAddress,
                 Role = contact.Role
             },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task DeleteAsync(int id)
@@ -67,6 +68,6 @@ public class ContactRepository : IContactRepository
         await connection.ExecuteAsync(
             "sp_Contacts_Delete",
             new { Id = id },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
     }
 }
