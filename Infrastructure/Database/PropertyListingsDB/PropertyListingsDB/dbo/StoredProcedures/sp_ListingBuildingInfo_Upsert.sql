@@ -2,7 +2,7 @@
 -- ListingBuildingInfo Stored Procedures
 -- ============================================
 
-CREATE OR ALTER PROCEDURE sp_ListingBuildingInfo_Upsert
+CREATE   PROCEDURE sp_ListingBuildingInfo_Upsert
     @ListingId INT,
     @ErfSize DECIMAL(12,2) = NULL,
     @FloorArea DECIMAL(12,2) = NULL,
@@ -31,15 +31,6 @@ BEGIN
     FROM ListingBuildingInfo
     WHERE ListingId = @ListingId;
 END
+
 GO
 
-CREATE OR ALTER PROCEDURE sp_ListingBuildingInfo_GetByListingId
-    @ListingId INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    SELECT Id, ListingId, ErfSize, FloorArea, ConstructionYear, FacingId, ZoningId
-    FROM ListingBuildingInfo
-    WHERE ListingId = @ListingId;
-END
-GO

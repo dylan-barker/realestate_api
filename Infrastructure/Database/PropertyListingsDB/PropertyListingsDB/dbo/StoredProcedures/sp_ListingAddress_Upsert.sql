@@ -2,7 +2,7 @@
 -- ListingAddress Stored Procedures
 -- ============================================
 
-CREATE OR ALTER PROCEDURE sp_ListingAddress_Upsert
+CREATE   PROCEDURE sp_ListingAddress_Upsert
     @ListingId INT,
     @ErfNumber NVARCHAR(50) = NULL,
     @EstateName NVARCHAR(200) = NULL,
@@ -45,15 +45,6 @@ BEGIN
     FROM ListingAddress
     WHERE ListingId = @ListingId;
 END
+
 GO
 
-CREATE OR ALTER PROCEDURE sp_ListingAddress_GetByListingId
-    @ListingId INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    SELECT ListingAddressId, ListingId, ErfNumber, EstateName, StreetNumber, UnitNumber, Street, Suburb, City, Province, Country, PostalCode, Latitude, Longitude
-    FROM ListingAddress
-    WHERE ListingId = @ListingId;
-END
-GO
