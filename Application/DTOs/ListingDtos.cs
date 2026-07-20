@@ -31,7 +31,8 @@ public record ListingResponse(
     RunningCostsDto? RunningCosts,
     List<RoomDto> Rooms,
     List<ParkingDto> Parking,
-    List<ContactDto> Contacts
+    List<ContactDto> Contacts,
+    List<OutdoorFeatureDto> OutdoorFeatures
 );
 
 public record ListingFilterRequest(string? Status, DateTime? DateFrom, DateTime? DateTo);

@@ -36,6 +36,8 @@ public class MappingProfile : Profile
 
         CreateMap<ListingRoomCustomFeature, CustomFeatureDto>();
 
+        CreateMap<ListingOutdoorFeature, OutdoorFeatureDto>();
+
         CreateMap<Contact, ContactDto>();
 
         // Request -> Entity mappings (inbound)
@@ -47,6 +49,8 @@ public class MappingProfile : Profile
         CreateMap<UpsertRoomConditionRequest, Condition>();
         CreateMap<AddCustomFeatureRequest, ListingRoomCustomFeature>();
         CreateMap<AddParkingRequest, ListingParking>();
+        CreateMap<AddOutdoorFeatureRequest, ListingOutdoorFeature>();
+
         CreateMap<AddContactRequest, Contact>();
 
         CreateMap<UpdateRoomRequest, ListingRoom>()

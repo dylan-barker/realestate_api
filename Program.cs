@@ -1,5 +1,4 @@
 using System.Text;
-using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using RealEstateApi.Application.Interfaces;
@@ -28,6 +27,7 @@ builder.Services.AddScoped<IPropertyRunningCostsRepository, PropertyRunningCosts
 builder.Services.AddScoped<IListingRoomRepository, ListingRoomRepository>();
 builder.Services.AddScoped<IListingParkingRepository, ListingParkingRepository>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
+builder.Services.AddScoped<IListingOutdoorFeatureRepository, ListingOutdoorFeatureRepository>();
 
 // Infrastructure Services
 builder.Services.Configure<R2Options>(builder.Configuration.GetSection(R2Options.SectionName));
@@ -42,6 +42,7 @@ builder.Services.AddScoped<IListingService, ListingService>();
 builder.Services.AddScoped<IListingRoomService, ListingRoomService>();
 builder.Services.AddScoped<IListingParkingService, ListingParkingService>();
 builder.Services.AddScoped<IListingContactService, ListingContactService>();
+builder.Services.AddScoped<IListingOutdoorFeatureService, ListingOutdoorFeatureService>();
 
 // Auth
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));

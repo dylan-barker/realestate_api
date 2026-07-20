@@ -15,6 +15,7 @@ public class ListingService : IListingService
     private readonly IListingRoomRepository _roomRepo;
     private readonly IListingParkingRepository _parkingRepo;
     private readonly IContactRepository _contactRepo;
+    private readonly IListingOutdoorFeatureRepository _outdoorFeatureRepo;
     private readonly IMapper _mapper;
 
     public ListingService(
@@ -26,6 +27,7 @@ public class ListingService : IListingService
         IListingRoomRepository roomRepo,
         IListingParkingRepository parkingRepo,
         IContactRepository contactRepo,
+        IListingOutdoorFeatureRepository outdoorFeatureRepo,
         IMapper mapper)
     {
         _listingRepo = listingRepo;
@@ -36,6 +38,7 @@ public class ListingService : IListingService
         _roomRepo = roomRepo;
         _parkingRepo = parkingRepo;
         _contactRepo = contactRepo;
+        _outdoorFeatureRepo = outdoorFeatureRepo;
         _mapper = mapper;
     }
 
@@ -143,8 +146,9 @@ public class ListingService : IListingService
         var roomsTask = BuildRoomDtosAsync(id);
         var parkingTask = _parkingRepo.GetByListingIdAsync(id);
         var contactsTask = _contactRepo.GetByListingIdAsync(id);
+        var outdoorFeaturesTask = _outdoorFeatureRepo.GetByListingIdAsync(id);
 
-        await Task.WhenAll(addressTask, buildingInfoTask, valuationTask, runningCostsTask, roomsTask, parkingTask, contactsTask);
+        await Task.WhenAll(addressTask, buildingInfoTask, valuationTask, runningCostsTask, roomsTask, parkingTask, contactsTask, outdoorFeaturesTask);
 
         return new ListingResponse(
             listing.Id, listing.ReferenceNumber, listing.P24Ref, listing.PropertyTypeId,
@@ -156,7 +160,8 @@ public class ListingService : IListingService
             runningCostsTask.Result is null ? null : _mapper.Map<RunningCostsDto>(runningCostsTask.Result),
             roomsTask.Result,
             parkingTask.Result.Select(p => _mapper.Map<ParkingDto>(p)).ToList(),
-            contactsTask.Result.Select(c => _mapper.Map<ContactDto>(c)).ToList()
+            contactsTask.Result.Select(c => _mapper.Map<ContactDto>(c)).ToList(),
+            outdoorFeaturesTask.Result.Select(f => _mapper.Map<OutdoorFeatureDto>(f)).ToList()
         );
     }
 
