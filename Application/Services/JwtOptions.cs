@@ -7,4 +7,5 @@ public class JwtOptions
     public string Issuer { get; set; } = "RealEstateApi";
     public string Audience { get; set; } = "RealEstateApi";
     public int ExpiryHours { get; set; } = 1;
+    public int RefreshTokenExpiryDays { get; set; } = 60;
 }
