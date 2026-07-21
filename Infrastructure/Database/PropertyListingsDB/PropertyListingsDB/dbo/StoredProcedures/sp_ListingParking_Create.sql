@@ -1,5 +1,5 @@
 
-CREATE   PROCEDURE sp_ListingParking_Create
+CREATE OR ALTER PROCEDURE sp_ListingParking_Create
     @ListingId INT,
     @ParkingTypeId INT,
     @Quantity INT
@@ -13,7 +13,7 @@ BEGIN
 
     SELECT lp.Id, lp.ListingId, lp.ParkingTypeId, lp.Quantity, pt.Description AS ParkingTypeDescription
     FROM ListingParking lp
-    INNER JOIN ParkingTypes pt ON pt.Id = lp.ParkingTypeId
+    INNER JOIN ParkingType pt ON pt.Id = lp.ParkingTypeId
     WHERE lp.Id = @Id;
 END
 

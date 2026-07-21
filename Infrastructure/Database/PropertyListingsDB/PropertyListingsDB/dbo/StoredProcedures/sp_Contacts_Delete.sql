@@ -1,10 +1,10 @@
 
-CREATE   PROCEDURE sp_Contacts_Delete
+CREATE OR ALTER PROCEDURE sp_Contacts_Delete
     @Id INT
 AS
 BEGIN
     SET NOCOUNT ON;
-    DELETE FROM Contacts WHERE Id = @Id;
+    DELETE FROM Contact WHERE Id = @Id;
 END
 
 GO

@@ -1,5 +1,5 @@
 
-CREATE   PROCEDURE sp_Contacts_Create
+CREATE OR ALTER PROCEDURE sp_Contacts_Create
     @ListingId INT,
     @FullName NVARCHAR(200) = NULL,
     @IdNumber NVARCHAR(50) = NULL,
@@ -11,13 +11,13 @@ CREATE   PROCEDURE sp_Contacts_Create
 AS
 BEGIN
     SET NOCOUNT ON;
-    INSERT INTO Contacts (ListingId, FullName, IdNumber, CompanyName, CompanyRegistrationNumber, MobilePhone, EmailAddress, Role)
+    INSERT INTO Contact (ListingId, FullName, IdNumber, CompanyName, CompanyRegistrationNumber, MobilePhone, EmailAddress, Role)
     VALUES (@ListingId, @FullName, @IdNumber, @CompanyName, @CompanyRegistrationNumber, @MobilePhone, @EmailAddress, @Role);
 
     DECLARE @Id INT = SCOPE_IDENTITY();
 
     SELECT Id, FullName, IdNumber, CompanyName, CompanyRegistrationNumber, MobilePhone, EmailAddress, Role, ListingId
-    FROM Contacts
+    FROM Contact
     WHERE Id = @Id;
 END
 
