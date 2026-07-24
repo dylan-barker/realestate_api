@@ -1,12 +1,10 @@
 using Dapper;
-using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Domain.Models;
 using RealEstateApi.Infrastructure.Data;
-using System.Data;
 
 namespace RealEstateApi.Infrastructure.Repositories;
 
-public class ListingRoomRepository : IListingRoomRepository
+public class ListingRoomRepository
 {
     private readonly DbConnectionFactory _connectionFactory;
 
@@ -19,9 +17,8 @@ public class ListingRoomRepository : IListingRoomRepository
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryAsync<ListingRoom>(
-            "sp_ListingRooms_GetByListingId",
-            new { ListingId = listingId },
-            commandType: CommandType.StoredProcedure);
+            "SELECT Id, ListingId, Name, RoomTypeId, RoomTypeOther, PhotoUrl, CreatedAt, UpdatedAt FROM ListingRoom WHERE ListingId = @ListingId ORDER BY CreatedAt",
+            new { ListingId = listingId });
     }
 
     public async Task<ListingRoom?> GetByIdAsync(int id)
@@ -44,122 +41,100 @@ public class ListingRoomRepository : IListingRoomRepository
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryFirstOrDefaultAsync<ListingRoom>(
-            "sp_ListingRooms_Create",
-            new
-            {
-                ListingId = room.ListingId,
-                Name = room.Name,
-                RoomTypeId = room.RoomTypeId,
-                RoomTypeOther = room.RoomTypeOther,
-                PhotoUrl = room.PhotoUrl
-            },
-            commandType: CommandType.StoredProcedure);
+            "INSERT INTO ListingRoom (ListingId, Name, RoomTypeId, RoomTypeOther, PhotoUrl, CreatedAt, UpdatedAt) " +
+            "OUTPUT INSERTED.Id, INSERTED.ListingId, INSERTED.Name, INSERTED.RoomTypeId, INSERTED.RoomTypeOther, INSERTED.PhotoUrl, INSERTED.CreatedAt, INSERTED.UpdatedAt " +
+            "VALUES (@ListingId, @Name, @RoomTypeId, @RoomTypeOther, @PhotoUrl, GETUTCDATE(), GETUTCDATE())",
+            new { room.ListingId, room.Name, room.RoomTypeId, room.RoomTypeOther, room.PhotoUrl });
     }
 
     public async Task<ListingRoom?> UpdateAsync(ListingRoom room)
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryFirstOrDefaultAsync<ListingRoom>(
-            "sp_ListingRooms_Update",
-            new
-            {
-                Id = room.Id,
-                Name = room.Name,
-                RoomTypeId = room.RoomTypeId,
-                RoomTypeOther = room.RoomTypeOther,
-                PhotoUrl = room.PhotoUrl
-            },
-            commandType: CommandType.StoredProcedure);
+            "UPDATE ListingRoom SET Name = COALESCE(@Name, Name), RoomTypeId = COALESCE(@RoomTypeId, RoomTypeId), " +
+            "RoomTypeOther = COALESCE(@RoomTypeOther, RoomTypeOther), PhotoUrl = COALESCE(@PhotoUrl, PhotoUrl), UpdatedAt = GETUTCDATE() " +
+            "OUTPUT INSERTED.Id, INSERTED.ListingId, INSERTED.Name, INSERTED.RoomTypeId, INSERTED.RoomTypeOther, INSERTED.PhotoUrl, INSERTED.CreatedAt, INSERTED.UpdatedAt " +
+            "WHERE Id = @Id",
+            new { room.Id, room.Name, room.RoomTypeId, room.RoomTypeOther, room.PhotoUrl });
     }
 
     public async Task DeleteAsync(int id)
     {
         using var connection = _connectionFactory.CreateConnection();
         await connection.ExecuteAsync(
-            "sp_ListingRooms_Delete",
-            new { Id = id },
-            commandType: CommandType.StoredProcedure);
+            "DELETE FROM ListingRoom WHERE Id = @Id", new { Id = id });
     }
 
     public async Task<Condition?> GetConditionByRoomIdAsync(int listingRoomId)
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryFirstOrDefaultAsync<Condition>(
-            "sp_Condition_GetByListingRoomId",
-            new { ListingRoomId = listingRoomId },
-            commandType: CommandType.StoredProcedure);
+            "SELECT Id, ListingRoomId, ConditionRating, Notes, ConditionCategoryId FROM Condition WHERE ListingRoomId = @ListingRoomId",
+            new { ListingRoomId = listingRoomId });
     }
 
     public async Task<Condition> UpsertConditionAsync(Condition condition)
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryFirstOrDefaultAsync<Condition>(
-            "sp_Condition_Upsert",
-            new
-            {
-                ListingRoomId = condition.ListingRoomId,
-                ConditionRating = condition.ConditionRating,
-                Notes = condition.Notes,
-                ConditionCategoryId = condition.ConditionCategoryId
-            },
-            commandType: CommandType.StoredProcedure);
+            "MERGE Condition AS t USING (SELECT @ListingRoomId AS ListingRoomId) AS s ON t.ListingRoomId = s.ListingRoomId " +
+            "WHEN MATCHED THEN UPDATE SET ConditionRating = @ConditionRating, Notes = @Notes, ConditionCategoryId = @ConditionCategoryId " +
+            "WHEN NOT MATCHED THEN INSERT (ListingRoomId, ConditionRating, Notes, ConditionCategoryId) " +
+            "VALUES (@ListingRoomId, @ConditionRating, @Notes, @ConditionCategoryId) " +
+            "OUTPUT INSERTED.Id, INSERTED.ListingRoomId, INSERTED.ConditionRating, INSERTED.Notes, INSERTED.ConditionCategoryId;",
+            condition);
     }
 
     public async Task<IEnumerable<Feature>> GetLinkedFeaturesAsync(int listingRoomId)
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryAsync<Feature>(
-            "sp_ListingRoomFeatures_GetByListingRoomId",
-            new { ListingRoomId = listingRoomId },
-            commandType: CommandType.StoredProcedure);
+            "SELECT f.Id, f.Category, f.Description FROM ListingRoomFeature lrf " +
+            "JOIN Feature f ON f.Id = lrf.FeatureId WHERE lrf.ListingRoomId = @ListingRoomId",
+            new { ListingRoomId = listingRoomId });
     }
 
     public async Task<IEnumerable<Feature>> LinkFeatureAsync(int listingRoomId, int featureId)
     {
         using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<Feature>(
-            "sp_ListingRoomFeatures_Link",
-            new { ListingRoomId = listingRoomId, FeatureId = featureId },
-            commandType: CommandType.StoredProcedure);
+        await connection.ExecuteAsync(
+            "IF NOT EXISTS (SELECT 1 FROM ListingRoomFeature WHERE ListingRoomId = @ListingRoomId AND FeatureId = @FeatureId) " +
+            "INSERT INTO ListingRoomFeature (ListingRoomId, FeatureId) VALUES (@ListingRoomId, @FeatureId)",
+            new { ListingRoomId = listingRoomId, FeatureId = featureId });
+        return await GetLinkedFeaturesAsync(listingRoomId);
     }
 
     public async Task<IEnumerable<Feature>> UnlinkFeatureAsync(int listingRoomId, int featureId)
     {
         using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<Feature>(
-            "sp_ListingRoomFeatures_Unlink",
-            new { ListingRoomId = listingRoomId, FeatureId = featureId },
-            commandType: CommandType.StoredProcedure);
+        await connection.ExecuteAsync(
+            "DELETE FROM ListingRoomFeature WHERE ListingRoomId = @ListingRoomId AND FeatureId = @FeatureId",
+            new { ListingRoomId = listingRoomId, FeatureId = featureId });
+        return await GetLinkedFeaturesAsync(listingRoomId);
     }
 
     public async Task<IEnumerable<ListingRoomCustomFeature>> GetCustomFeaturesAsync(int listingRoomId)
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryAsync<ListingRoomCustomFeature>(
-            "sp_ListingRoomCustomFeatures_GetByListingRoomId",
-            new { ListingRoomId = listingRoomId },
-            commandType: CommandType.StoredProcedure);
+            "SELECT Id, ListingRoomId, Description FROM ListingRoomCustomFeature WHERE ListingRoomId = @ListingRoomId",
+            new { ListingRoomId = listingRoomId });
     }
 
     public async Task<ListingRoomCustomFeature> AddCustomFeatureAsync(ListingRoomCustomFeature feature)
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryFirstOrDefaultAsync<ListingRoomCustomFeature>(
-            "sp_ListingRoomCustomFeatures_Add",
-            new
-            {
-                ListingRoomId = feature.ListingRoomId,
-                Description = feature.Description
-            },
-            commandType: CommandType.StoredProcedure);
+            "INSERT INTO ListingRoomCustomFeature (ListingRoomId, Description) " +
+            "OUTPUT INSERTED.Id, INSERTED.ListingRoomId, INSERTED.Description " +
+            "VALUES (@ListingRoomId, @Description)",
+            new { feature.ListingRoomId, feature.Description });
     }
 
     public async Task DeleteCustomFeatureAsync(int id)
     {
         using var connection = _connectionFactory.CreateConnection();
         await connection.ExecuteAsync(
-            "sp_ListingRoomCustomFeatures_Remove",
-            new { Id = id },
-            commandType: CommandType.StoredProcedure);
+            "DELETE FROM ListingRoomCustomFeature WHERE Id = @Id", new { Id = id });
     }
 }

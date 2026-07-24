@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RealEstateApi.Application.DTOs;
-using RealEstateApi.Application.Interfaces;
+using RealEstateApi.Application.Services;
 
 namespace RealEstateApi.Controllers;
 
@@ -10,9 +10,9 @@ namespace RealEstateApi.Controllers;
 [Route("api/listings/{listingId}/contacts")]
 public class ListingContactsController : ControllerBase
 {
-    private readonly IListingContactService _contactService;
+    private readonly ListingContactService _contactService;
 
-    public ListingContactsController(IListingContactService contactService)
+    public ListingContactsController(ListingContactService contactService)
     {
         _contactService = contactService;
     }

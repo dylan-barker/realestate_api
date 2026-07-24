@@ -1,12 +1,10 @@
 using Dapper;
-using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Domain.Models;
 using RealEstateApi.Infrastructure.Data;
-using System.Data;
 
 namespace RealEstateApi.Infrastructure.Repositories;
 
-public class ListingBuildingInfoRepository : IListingBuildingInfoRepository
+public class ListingBuildingInfoRepository
 {
     private readonly DbConnectionFactory _connectionFactory;
 
@@ -19,25 +17,21 @@ public class ListingBuildingInfoRepository : IListingBuildingInfoRepository
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryFirstOrDefaultAsync<ListingBuildingInfo>(
-            "sp_ListingBuildingInfo_GetByListingId",
-            new { ListingId = listingId },
-            commandType: CommandType.StoredProcedure);
+            "SELECT * FROM ListingBuildingInfo WHERE ListingId = @ListingId", new { ListingId = listingId });
     }
 
     public async Task<ListingBuildingInfo> UpsertAsync(ListingBuildingInfo info)
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryFirstOrDefaultAsync<ListingBuildingInfo>(
-            "sp_ListingBuildingInfo_Upsert",
-            new
-            {
-                ListingId = info.ListingId,
-                ErfSize = info.ErfSize,
-                FloorArea = info.FloorArea,
-                ConstructionYear = info.ConstructionYear,
-                FacingId = info.FacingId,
-                ZoningId = info.ZoningId
-            },
-            commandType: CommandType.StoredProcedure);
+            "MERGE ListingBuildingInfo AS t " +
+            "USING (SELECT @ListingId AS ListingId) AS s " +
+            "ON t.ListingId = s.ListingId " +
+            "WHEN MATCHED THEN UPDATE SET " +
+            "ErfSize = @ErfSize, FloorArea = @FloorArea, ConstructionYear = @ConstructionYear, FacingId = @FacingId, ZoningId = @ZoningId " +
+            "WHEN NOT MATCHED THEN INSERT (ListingId, ErfSize, FloorArea, ConstructionYear, FacingId, ZoningId) " +
+            "VALUES (@ListingId, @ErfSize, @FloorArea, @ConstructionYear, @FacingId, @ZoningId) " +
+            "OUTPUT INSERTED.*;",
+            info);
     }
 }

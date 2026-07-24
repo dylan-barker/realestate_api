@@ -1,12 +1,10 @@
 using Dapper;
-using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Domain.Models;
 using RealEstateApi.Infrastructure.Data;
-using System.Data;
 
 namespace RealEstateApi.Infrastructure.Repositories;
 
-public class ListingAddressRepository : IListingAddressRepository
+public class ListingAddressRepository
 {
     private readonly DbConnectionFactory _connectionFactory;
 
@@ -19,32 +17,23 @@ public class ListingAddressRepository : IListingAddressRepository
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryFirstOrDefaultAsync<ListingAddress>(
-            "sp_ListingAddress_GetByListingId",
-            new { ListingId = listingId },
-            commandType: CommandType.StoredProcedure);
+            "SELECT * FROM ListingAddress WHERE ListingId = @ListingId", new { ListingId = listingId });
     }
 
     public async Task<ListingAddress> UpsertAsync(ListingAddress address)
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryFirstOrDefaultAsync<ListingAddress>(
-            "sp_ListingAddress_Upsert",
-            new
-            {
-                ListingId = address.ListingId,
-                ErfNumber = address.ErfNumber,
-                EstateName = address.EstateName,
-                StreetNumber = address.StreetNumber,
-                UnitNumber = address.UnitNumber,
-                Street = address.Street,
-                Suburb = address.Suburb,
-                City = address.City,
-                Province = address.Province,
-                Country = address.Country,
-                PostalCode = address.PostalCode,
-                Latitude = address.Latitude,
-                Longitude = address.Longitude
-            },
-            commandType: CommandType.StoredProcedure);
+            "MERGE ListingAddress AS t " +
+            "USING (SELECT @ListingId AS ListingId) AS s " +
+            "ON t.ListingId = s.ListingId " +
+            "WHEN MATCHED THEN UPDATE SET " +
+            "ErfNumber = @ErfNumber, EstateName = @EstateName, StreetNumber = @StreetNumber, UnitNumber = @UnitNumber, " +
+            "Street = @Street, Suburb = @Suburb, City = @City, Province = @Province, Country = @Country, " +
+            "PostalCode = @PostalCode, Latitude = @Latitude, Longitude = @Longitude " +
+            "WHEN NOT MATCHED THEN INSERT (ListingId, ErfNumber, EstateName, StreetNumber, UnitNumber, Street, Suburb, City, Province, Country, PostalCode, Latitude, Longitude) " +
+            "VALUES (@ListingId, @ErfNumber, @EstateName, @StreetNumber, @UnitNumber, @Street, @Suburb, @City, @Province, @Country, @PostalCode, @Latitude, @Longitude) " +
+            "OUTPUT INSERTED.*;",
+            address);
     }
 }

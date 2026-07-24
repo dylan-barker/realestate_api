@@ -1,13 +1,10 @@
 using Dapper;
-using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Domain.Models;
 using RealEstateApi.Infrastructure.Data;
-using System.Data;
-using System.Text.Json;
 
 namespace RealEstateApi.Infrastructure.Repositories;
 
-public class ListingOutdoorFeatureRepository : IListingOutdoorFeatureRepository
+public class ListingOutdoorFeatureRepository
 {
     private readonly DbConnectionFactory _connectionFactory;
 
@@ -20,43 +17,42 @@ public class ListingOutdoorFeatureRepository : IListingOutdoorFeatureRepository
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryAsync<ListingOutdoorFeature>(
-            "sp_ListingOutdoorFeature_GetByListingId",
-            new { ListingId = listingId },
-            commandType: CommandType.StoredProcedure);
+            "SELECT Id, ListingId, Description FROM ListingOutdoorFeature WHERE ListingId = @ListingId ORDER BY Id",
+            new { ListingId = listingId });
     }
 
     public async Task<ListingOutdoorFeature> AddAsync(ListingOutdoorFeature feature)
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryFirstOrDefaultAsync<ListingOutdoorFeature>(
-            "sp_ListingOutdoorFeature_Add",
-            new
-            {
-                ListingId = feature.ListingId,
-                Description = feature.Description
-            },
-            commandType: CommandType.StoredProcedure);
+            "INSERT INTO ListingOutdoorFeature (ListingId, Description) " +
+            "OUTPUT INSERTED.Id, INSERTED.ListingId, INSERTED.Description " +
+            "VALUES (@ListingId, @Description)",
+            new { feature.ListingId, feature.Description });
     }
 
     public async Task DeleteAsync(int id)
     {
         using var connection = _connectionFactory.CreateConnection();
         await connection.ExecuteAsync(
-            "sp_ListingOutdoorFeature_Delete",
-            new { Id = id },
-            commandType: CommandType.StoredProcedure);
+            "DELETE FROM ListingOutdoorFeature WHERE Id = @Id", new { Id = id });
     }
 
     public async Task<IEnumerable<ListingOutdoorFeature>> ReplaceAllAsync(int listingId, IEnumerable<string> descriptions)
     {
         using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<ListingOutdoorFeature>(
-            "sp_ListingOutdoorFeature_ReplaceAll",
-            new
-            {
-                ListingId = listingId,
-                Descriptions = JsonSerializer.Serialize(descriptions)
-            },
-            commandType: CommandType.StoredProcedure);
+        connection.Open();
+        using var tx = connection.BeginTransaction();
+        await connection.ExecuteAsync(
+            "DELETE FROM ListingOutdoorFeature WHERE ListingId = @ListingId",
+            new { ListingId = listingId }, transaction: tx);
+        foreach (var desc in descriptions)
+        {
+            await connection.ExecuteAsync(
+                "INSERT INTO ListingOutdoorFeature (ListingId, Description) VALUES (@ListingId, @Description)",
+                new { ListingId = listingId, Description = desc }, transaction: tx);
+        }
+        tx.Commit();
+        return await GetByListingIdAsync(listingId);
     }
 }

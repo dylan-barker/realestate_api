@@ -5,20 +5,20 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using RealEstateApi.Application.DTOs;
-using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Domain.Models;
+using RealEstateApi.Infrastructure.Repositories;
 
 namespace RealEstateApi.Application.Services;
 
-public class AuthService : IAuthService
+public class AuthService
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IRefreshTokenRepository _refreshTokenRepository;
+    private readonly UserRepository _userRepository;
+    private readonly RefreshTokenRepository _refreshTokenRepository;
     private readonly JwtOptions _jwtOptions;
 
     public AuthService(
-        IUserRepository userRepository,
-        IRefreshTokenRepository refreshTokenRepository,
+        UserRepository userRepository,
+        RefreshTokenRepository refreshTokenRepository,
         IOptions<JwtOptions> jwtOptions)
     {
         _userRepository = userRepository;

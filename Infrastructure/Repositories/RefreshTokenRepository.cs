@@ -1,12 +1,10 @@
 using Dapper;
-using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Domain.Models;
 using RealEstateApi.Infrastructure.Data;
-using System.Data;
 
 namespace RealEstateApi.Infrastructure.Repositories;
 
-public class RefreshTokenRepository : IRefreshTokenRepository
+public class RefreshTokenRepository
 {
     private readonly DbConnectionFactory _connectionFactory;
 
@@ -19,35 +17,30 @@ public class RefreshTokenRepository : IRefreshTokenRepository
     {
         using var conn = _connectionFactory.CreateConnection();
         return await conn.QueryFirstOrDefaultAsync<RefreshToken>(
-            "sp_RefreshTokens_GetByTokenHash",
-            new { TokenHash = tokenHash },
-            commandType: CommandType.StoredProcedure);
+            "SELECT Id, UserId, TokenHash, ExpiresAt, CreatedAt, IsRevoked FROM RefreshTokens WHERE TokenHash = @TokenHash",
+            new { TokenHash = tokenHash });
     }
 
     public async Task RevokeUserTokensAsync(int userId)
     {
         using var conn = _connectionFactory.CreateConnection();
         await conn.ExecuteAsync(
-            "sp_RefreshTokens_RevokeUserTokens",
-            new { UserId = userId },
-            commandType: CommandType.StoredProcedure);
+            "UPDATE RefreshTokens SET IsRevoked = 1 WHERE UserId = @UserId AND IsRevoked = 0",
+            new { UserId = userId });
     }
 
     public async Task CreateAsync(RefreshToken refreshToken)
     {
         using var conn = _connectionFactory.CreateConnection();
         await conn.ExecuteAsync(
-            "sp_RefreshTokens_Create",
-            new { refreshToken.UserId, refreshToken.TokenHash, refreshToken.ExpiresAt, refreshToken.CreatedAt, refreshToken.IsRevoked },
-            commandType: CommandType.StoredProcedure);
+            "INSERT INTO RefreshTokens (UserId, TokenHash, ExpiresAt, CreatedAt, IsRevoked) VALUES (@UserId, @TokenHash, @ExpiresAt, @CreatedAt, @IsRevoked)",
+            new { refreshToken.UserId, refreshToken.TokenHash, refreshToken.ExpiresAt, refreshToken.CreatedAt, refreshToken.IsRevoked });
     }
 
     public async Task RevokeAsync(int id)
     {
         using var conn = _connectionFactory.CreateConnection();
         await conn.ExecuteAsync(
-            "sp_RefreshTokens_Revoke",
-            new { Id = id },
-            commandType: CommandType.StoredProcedure);
+            "UPDATE RefreshTokens SET IsRevoked = 1 WHERE Id = @Id", new { Id = id });
     }
 }

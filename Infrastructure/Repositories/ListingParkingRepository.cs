@@ -1,12 +1,10 @@
 using Dapper;
-using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Domain.Models;
 using RealEstateApi.Infrastructure.Data;
-using System.Data;
 
 namespace RealEstateApi.Infrastructure.Repositories;
 
-public class ListingParkingRepository : IListingParkingRepository
+public class ListingParkingRepository
 {
     private readonly DbConnectionFactory _connectionFactory;
 
@@ -19,40 +17,38 @@ public class ListingParkingRepository : IListingParkingRepository
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryAsync<ListingParking>(
-            "sp_ListingParking_GetByListingId",
-            new { ListingId = listingId },
-            commandType: CommandType.StoredProcedure);
+            "SELECT lp.Id, lp.ListingId, lp.ParkingTypeId, lp.Quantity, pt.Description AS ParkingTypeDescription " +
+            "FROM ListingParking lp INNER JOIN ParkingType pt ON pt.Id = lp.ParkingTypeId " +
+            "WHERE lp.ListingId = @ListingId ORDER BY pt.Description",
+            new { ListingId = listingId });
     }
 
     public async Task<ListingParking> CreateAsync(ListingParking parking)
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryFirstOrDefaultAsync<ListingParking>(
-            "sp_ListingParking_Create",
-            new
-            {
-                ListingId = parking.ListingId,
-                ParkingTypeId = parking.ParkingTypeId,
-                Quantity = parking.Quantity
-            },
-            commandType: CommandType.StoredProcedure);
+            "DECLARE @Id INT; " +
+            "INSERT INTO ListingParking (ListingId, ParkingTypeId, Quantity) VALUES (@ListingId, @ParkingTypeId, @Quantity); " +
+            "SET @Id = SCOPE_IDENTITY(); " +
+            "SELECT lp.Id, lp.ListingId, lp.ParkingTypeId, lp.Quantity, pt.Description AS ParkingTypeDescription " +
+            "FROM ListingParking lp INNER JOIN ParkingType pt ON pt.Id = lp.ParkingTypeId WHERE lp.Id = @Id;",
+            new { parking.ListingId, parking.ParkingTypeId, parking.Quantity });
     }
 
     public async Task<ListingParking?> UpdateAsync(int id, int quantity)
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryFirstOrDefaultAsync<ListingParking>(
-            "sp_ListingParking_Update",
-            new { Id = id, Quantity = quantity },
-            commandType: CommandType.StoredProcedure);
+            "UPDATE ListingParking SET Quantity = @Quantity WHERE Id = @Id; " +
+            "SELECT lp.Id, lp.ListingId, lp.ParkingTypeId, lp.Quantity, pt.Description AS ParkingTypeDescription " +
+            "FROM ListingParking lp INNER JOIN ParkingType pt ON pt.Id = lp.ParkingTypeId WHERE lp.Id = @Id;",
+            new { Id = id, Quantity = quantity });
     }
 
     public async Task DeleteAsync(int id)
     {
         using var connection = _connectionFactory.CreateConnection();
         await connection.ExecuteAsync(
-            "sp_ListingParking_Delete",
-            new { Id = id },
-            commandType: CommandType.StoredProcedure);
+            "DELETE FROM ListingParking WHERE Id = @Id", new { Id = id });
     }
 }

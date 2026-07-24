@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RealEstateApi.Application.DTOs;
-using RealEstateApi.Application.Interfaces;
+using RealEstateApi.Application.Services;
 
 namespace RealEstateApi.Controllers;
 
@@ -10,9 +10,9 @@ namespace RealEstateApi.Controllers;
 [Route("api/listings/{listingId}/outdoor-features")]
 public class ListingOutdoorFeaturesController : ControllerBase
 {
-    private readonly IListingOutdoorFeatureService _outdoorFeatureService;
+    private readonly ListingOutdoorFeatureService _outdoorFeatureService;
 
-    public ListingOutdoorFeaturesController(IListingOutdoorFeatureService outdoorFeatureService)
+    public ListingOutdoorFeaturesController(ListingOutdoorFeatureService outdoorFeatureService)
     {
         _outdoorFeatureService = outdoorFeatureService;
     }

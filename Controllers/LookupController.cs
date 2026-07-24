@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RealEstateApi.Application.Interfaces;
+using RealEstateApi.Application.Services;
 
 namespace RealEstateApi.Controllers;
 
@@ -9,9 +9,9 @@ namespace RealEstateApi.Controllers;
 [Route("api")]
 public class LookupController : ControllerBase
 {
-    private readonly ILookupService _lookupService;
+    private readonly LookupService _lookupService;
 
-    public LookupController(ILookupService lookupService)
+    public LookupController(LookupService lookupService)
     {
         _lookupService = lookupService;
     }

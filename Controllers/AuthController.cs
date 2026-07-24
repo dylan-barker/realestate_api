@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using RealEstateApi.Application.DTOs;
-using RealEstateApi.Application.Interfaces;
+using RealEstateApi.Application.Services;
 
 namespace RealEstateApi.Controllers;
 
@@ -8,9 +8,9 @@ namespace RealEstateApi.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private readonly AuthService _authService;
 
-    public AuthController(IAuthService authService)
+    public AuthController(AuthService authService)
     {
         _authService = authService;
     }

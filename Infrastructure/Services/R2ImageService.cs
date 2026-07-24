@@ -1,11 +1,10 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Options;
-using RealEstateApi.Application.Interfaces;
 
 namespace RealEstateApi.Infrastructure.Services;
 
-public class R2ImageService : IImageService, IDisposable
+public class R2ImageService : IDisposable
 {
     private readonly AmazonS3Client _s3Client;
     private readonly R2Options _options;

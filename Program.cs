@@ -1,12 +1,10 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using RealEstateApi.Application.Interfaces;
 using RealEstateApi.Application.Services;
 using RealEstateApi.Infrastructure.Data;
 using RealEstateApi.Infrastructure.Repositories;
 using RealEstateApi.Infrastructure.Services;
-using RealEstateApi.Mappings;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,37 +16,34 @@ builder.Services.AddOpenApi();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddSingleton(new DbConnectionFactory(connectionString!));
 
-builder.Services.AddScoped<ILookupRepository, LookupRepository>();
-builder.Services.AddScoped<IListingRepository, ListingRepository>();
-builder.Services.AddScoped<IListingAddressRepository, ListingAddressRepository>();
-builder.Services.AddScoped<IListingBuildingInfoRepository, ListingBuildingInfoRepository>();
-builder.Services.AddScoped<IListingValuationRepository, ListingValuationRepository>();
-builder.Services.AddScoped<IPropertyRunningCostsRepository, PropertyRunningCostsRepository>();
-builder.Services.AddScoped<IListingRoomRepository, ListingRoomRepository>();
-builder.Services.AddScoped<IListingParkingRepository, ListingParkingRepository>();
-builder.Services.AddScoped<IContactRepository, ContactRepository>();
-builder.Services.AddScoped<IListingOutdoorFeatureRepository, ListingOutdoorFeatureRepository>();
+builder.Services.AddScoped<LookupRepository>();
+builder.Services.AddScoped<ListingRepository>();
+builder.Services.AddScoped<ListingAddressRepository>();
+builder.Services.AddScoped<ListingBuildingInfoRepository>();
+builder.Services.AddScoped<ListingValuationRepository>();
+builder.Services.AddScoped<PropertyRunningCostsRepository>();
+builder.Services.AddScoped<ListingRoomRepository>();
+builder.Services.AddScoped<ListingParkingRepository>();
+builder.Services.AddScoped<ContactRepository>();
+builder.Services.AddScoped<ListingOutdoorFeatureRepository>();
 
 // Infrastructure Services
 builder.Services.Configure<R2Options>(builder.Configuration.GetSection(R2Options.SectionName));
-builder.Services.AddSingleton<IImageService, R2ImageService>();
-
-// AutoMapper
-builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfile>());
+builder.Services.AddSingleton<R2ImageService>();
 
 // Application Services
-builder.Services.AddScoped<ILookupService, LookupService>();
-builder.Services.AddScoped<IListingService, ListingService>();
-builder.Services.AddScoped<IListingRoomService, ListingRoomService>();
-builder.Services.AddScoped<IListingParkingService, ListingParkingService>();
-builder.Services.AddScoped<IListingContactService, ListingContactService>();
-builder.Services.AddScoped<IListingOutdoorFeatureService, ListingOutdoorFeatureService>();
+builder.Services.AddScoped<LookupService>();
+builder.Services.AddScoped<ListingService>();
+builder.Services.AddScoped<ListingRoomService>();
+builder.Services.AddScoped<ListingParkingService>();
+builder.Services.AddScoped<ListingContactService>();
+builder.Services.AddScoped<ListingOutdoorFeatureService>();
 
 // Auth
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<UserRepository>();
+builder.Services.AddScoped<RefreshTokenRepository>();
+builder.Services.AddScoped<AuthService>();
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>();
 var signingKey = Encoding.UTF8.GetBytes(jwtOptions!.Secret);
